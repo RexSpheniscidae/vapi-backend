@@ -64,3 +64,48 @@ app.post("/vapi/book-slot", async (req, res) => {
     res.status(500).json({ error: "Unable to book meeting" });
   }
 });
+// === Calendly OAuth: Start Flow ===
+app.get("/oauth/calendly/start", (req, res) => {
+  const params = new URLSearchParams({
+    client_id: process.env.CALENDLY_CLIENT_ID,
+    response_type: "code",
+    redirect_uri: process.env.CALENDLY_REDIRECT_URI
+  });
+  res.redirect(`https://auth.calendly.com/oauth/authorize?${params.toString()}`);
+});
+
+// === Calendly OAuth: Callback ===
+app.get("/oauth/calendly/callback", async (req, res) => {
+  const { code } = req.query;
+  if (!code) return res.status(400).send("Missing code");
+
+  try {
+    const body = new URLSearchParams({
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: process.env.CALENDLY_REDIRECT_URI
+    });
+
+    const authHeader = Buffer.from(
+      `${process.env.CALENDLY_CLIENT_ID}:${process.env.CALENDLY_CLIENT_SECRET}`
+    ).toString("base64");
+
+    const r = await fetch("https://auth.calendly.com/oauth/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${authHeader}`
+      },
+      body
+    });
+
+    const tokens = await r.json();
+    console.log("✅ Calendly OAuth Success:", tokens);
+
+    // You will later save tokens permanently (database). For now:
+    res.send("✅ Calendly Connected! You can close this window.");
+  } catch (err) {
+    console.error("❌ OAuth Error:", err);
+    res.status(500).send("OAuth failed");
+  }
+});
