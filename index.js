@@ -8,6 +8,15 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// ✅ Verify Vapi Shared Secret (protects your booking + availability endpoints)
+app.use((req, res, next) => {
+  const auth = req.headers["x-vapi-secret"];
+  if (!auth || auth !== process.env.VAPI_SHARED_SECRET) {
+    return res.status(403).json({ error: "Unauthorized" });
+  }
+  next();
+});
+
 app.get("/", (req, res) => {
   res.send("Backend is running ✅");
 });
