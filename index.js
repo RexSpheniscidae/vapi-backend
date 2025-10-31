@@ -160,7 +160,10 @@ app.post("/vapi/book-slot", async (req, res) => {
     const payload = {
       event_type: "https://api.calendly.com/event_types/02cc0b90-407e-4009-82e8-0bc33598718d",
       start_time: startTimeISO,
-      invitee: { email, first_name, last_name }//, timezone } removed because that event doesn't have location info
+      invitee: { email, first_name, last_name , timezone },
+      location: {
+        kind: "outbound_call"
+      }
     };
 
     console.log("➡️ Sending booking payload:", payload);
