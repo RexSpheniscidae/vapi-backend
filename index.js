@@ -47,22 +47,28 @@ app.get("/", (req, res) => {
 app.get("/vapi/get-availability", async (req, res) => {
   console.log("🔹 /vapi/get-availability CALLED");
 
-  await refreshCalendlyAccessToken(); // ✅ Always refresh token before request
+  await refreshCalendlyAccessToken();
 
   const eventType = "https://api.calendly.com/event_types/02cc0b90-407e-4009-82e8-0bc33598718d";
-  const startTime = new Date().toISOString();
-  const endTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  // ✅ Round current time forward slightly to avoid microsecond boundary issues
+  const startTime = new Date(Date.now() + 60 * 1000).toISOString(); // +1 minute
+  const endTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days out
+
+  console.log("➡️ Requesting Calendly Availability:", { startTime, endTime });
 
   try {
-    const response = await fetch(
-      `https://api.calendly.com/event_type_available_times?event_type=${eventType}&start_time=${startTime}&end_time=${endTime}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.CALENDLY_TOKEN}`,
-          "Content-Type": "application/json"
-        }
+    const url = new URL("https://api.calendly.com/event_type_available_times");
+    url.searchParams.set("event_type", eventType);
+    url.searchParams.set("start_time", startTime);
+    url.searchParams.set("end_time", endTime);
+
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${process.env.CALENDLY_TOKEN}`,
+        "Content-Type": "application/json"
       }
-    );
+    });
 
     const data = await response.json();
     console.log("✅ Calendly Availability Response:", JSON.stringify(data, null, 2));
