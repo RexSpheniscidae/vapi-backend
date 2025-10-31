@@ -144,7 +144,7 @@ app.post("/vapi/book-slot", async (req, res) => {
     email = email || "placeholder@gmail.com";
     first_name = first_name || "Placeholder name";
     last_name = last_name || "Placeholder last name";
-    let timezone = timezone || "America/Los_Angeles";
+    timezone = timezone || "America/Los_Angeles";
     if (!VALID_TIMEZONES.includes(timezone)) {
       console.warn(`⚠️ Invalid timezone received: ${timezone}. Defaulting to America/Los_Angeles`);
       timezone = "America/Los_Angeles";
