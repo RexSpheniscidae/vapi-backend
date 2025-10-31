@@ -116,7 +116,9 @@ app.get("/vapi/get-availability", async (req, res) => {
     const data = await response.json();
     //console.log("✅ Calendly Availability Response:", JSON.stringify(data, null, 2));
 
-    res.json(data.collection || []);
+    res.json({
+      available_slots: data.collection || []
+    });
   } catch (err) {
     console.error("❌ Availability Error:", err);
     res.status(500).json({ error: "Unable to fetch availability" });
