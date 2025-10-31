@@ -152,9 +152,8 @@ app.post("/vapi/book-slot", async (req, res) => {
     };
 
     console.log("➡️ Sending booking payload:", payload);
-
-    // 7️⃣ Send booking request to Calendly
-    const response = await fetch("https://api.calendly.com/scheduling/event_invitees", {
+    
+    const response = await fetch("https://api.calendly.com/invitees", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.CALENDLY_TOKEN}`,
@@ -162,7 +161,7 @@ app.post("/vapi/book-slot", async (req, res) => {
       },
       body: JSON.stringify(payload)
     });
-
+    
     const data = await response.json();
 
     // 8️⃣ Check result and respond
