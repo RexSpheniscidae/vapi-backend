@@ -19,15 +19,15 @@ async function updateRenderEnvVariable(name, value) {
 
   console.log(`🔁 Updating ${name} in Render Environment...`);
 
-  const response = await fetch(`https://api.render.com/v1/services/${serviceId}/env-vars`, {
-    method: "PATCH",
+  const response = await fetch(`https://api.render.com/v1/services/${serviceId}/env-vars/CALENDLY_REFRESH_TOKEN`, {
+    method: "PUT",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
       envVars: [
-        { key: name, value: value }
+        { envVarValue: value }
       ],
     }),
   });
