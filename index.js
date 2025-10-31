@@ -1,7 +1,15 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import fs from "fs";
+import path from "path";
 
+// Read valid timezones from file
+const timezoneFile = path.join(process.cwd(), "timezones.txt");
+const VALID_TIMEZONES = fs.readFileSync(timezoneFile, "utf-8")
+  .split("\n")
+  .map(tz => tz.trim())
+  .filter(Boolean);
 dotenv.config();
 
 const app = express();
@@ -136,7 +144,11 @@ app.post("/vapi/book-slot", async (req, res) => {
     email = email || "placeholder@gmail.com";
     first_name = first_name || "Placeholder name";
     last_name = last_name || "Placeholder last name";
-    timezone = timezone || "PDT"; // default to GMT-7
+    let timezone = timezone || "America/Los_Angeles";
+    if (!VALID_TIMEZONES.includes(timezone)) {
+      console.warn(`⚠️ Invalid timezone received: ${timezone}. Defaulting to America/Los_Angeles`);
+      timezone = "America/Los_Angeles";
+    }
 
     // 4️⃣ Refresh Calendly access token
     await refreshCalendlyAccessToken();
