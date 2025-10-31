@@ -114,7 +114,7 @@ app.get("/vapi/get-availability", async (req, res) => {
     });
 
     const data = await response.json();
-    console.log("✅ Calendly Availability Response:", JSON.stringify(data, null, 2));
+    //console.log("✅ Calendly Availability Response:", JSON.stringify(data, null, 2));
 
     res.json(data.resource?.available_times || []);
   } catch (err) {
