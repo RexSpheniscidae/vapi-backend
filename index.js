@@ -8,6 +8,38 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+async function updateRenderEnvVariable(name, value) {
+  const serviceId = process.env.RENDER_SERVICE_ID; // добавь в .env
+  const apiKey = process.env.RENDER_API_KEY;
+
+  if (!serviceId || !apiKey) {
+    console.warn("⚠️ Missing Render credentials, skipping env update");
+    return;
+  }
+
+  console.log(`🔁 Updating ${name} in Render Environment...`);
+
+  const response = await fetch(`https://api.render.com/v1/services/${serviceId}/env-vars`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      envVars: [
+        { key: name, value: value }
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    console.error(`❌ Failed to update Render env var: ${response.status}`, await response.text());
+  } else {
+    console.log(`✅ Updated ${name} in Render`);
+  }
+}
+
+
 async function refreshCalendlyAccessToken() {
   console.log("🔄 Refreshing Calendly OAuth token...");
 
@@ -36,6 +68,10 @@ async function refreshCalendlyAccessToken() {
   // Save new tokens in memory
   process.env.CALENDLY_TOKEN = tokens.access_token;
   process.env.CALENDLY_REFRESH_TOKEN = tokens.refresh_token;
+  if (tokens.refresh_token) {
+    process.env.CALENDLY_REFRESH_TOKEN = tokens.refresh_token;
+    await updateRenderEnvVariable("CALENDLY_REFRESH_TOKEN", tokens.refresh_token);
+  }
 }
 
 // Health check
