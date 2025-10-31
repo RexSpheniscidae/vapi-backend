@@ -8,6 +8,36 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+async function refreshCalendlyAccessToken() {
+  console.log("🔄 Refreshing Calendly OAuth token...");
+
+  const body = new URLSearchParams({
+    grant_type: "refresh_token",
+    refresh_token: process.env.CALENDLY_REFRESH_TOKEN,
+    redirect_uri: process.env.CALENDLY_REDIRECT_URI
+  });
+
+  const basic = Buffer.from(
+    `${process.env.CALENDLY_CLIENT_ID}:${process.env.CALENDLY_CLIENT_SECRET}`
+  ).toString("base64");
+
+  const response = await fetch("https://auth.calendly.com/oauth/token", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${basic}`,
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body
+  });
+
+  const tokens = await response.json();
+  console.log("✅ New Calendly Tokens Received:", tokens);
+
+  // Update in memory so future calls use the new token
+  process.env.CALENDLY_TOKEN = tokens.access_token;
+  process.env.CALENDLY_REFRESH_TOKEN = tokens.refresh_token;
+}
+
 app.get("/", (req, res) => {
   res.send("Backend is running ✅");
 });
