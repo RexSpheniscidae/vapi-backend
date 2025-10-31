@@ -23,10 +23,11 @@ async function updateRenderEnvVariable(name, value) {
     method: "PUT",
     headers: {
       Authorization: `Bearer ${apiKey}`,
+      Accept: "application/json",
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      envVarValue: value
+      value: value
     }),
   });
 
