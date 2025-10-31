@@ -162,7 +162,8 @@ app.post("/vapi/book-slot", async (req, res) => {
       start_time: startTimeISO,
       invitee: { email, first_name, last_name , timezone },
       location: {
-        kind: "outbound_call"
+        kind: "outbound_call",
+        location: "Phone Call"
       }
     };
 
