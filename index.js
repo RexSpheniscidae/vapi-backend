@@ -120,17 +120,40 @@ app.post("/vapi/book-slot", async (req, res) => {
   console.log("🔹 /vapi/book-slot CALLED");
   console.log("📩 Request Body:", req.body);
 
-  await refreshCalendlyAccessToken(); // ✅ Always refresh token before request
-
-  const { start_time, email, first_name, last_name, timezone } = req.body;
-
-  const payload = {
-    event_type: `https://api.calendly.com/event_types/02cc0b90-407e-4009-82e8-0bc33598718d`,
-    start_time,
-    invitee: { email, first_name, last_name, timezone }
-  };
-
   try {
+    // 1️⃣ Extract input fields with defaults
+    let { start_time, email, first_name, last_name, timezone } = req.body;
+
+    // 2️⃣ Validate start_time format: expect 'YYYY-MM-DDTHH:mm'
+    if (!start_time || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(start_time)) {
+      return res.status(400).json({
+        book_status: "failed",
+        message: "Invalid or missing start_time. Expected format: YYYY-MM-DDTHH:mm"
+      });
+    }
+
+    // 3️⃣ Apply default values if fields are missing
+    email = email || "placeholder@gmail.com";
+    first_name = first_name || "Placeholder name";
+    last_name = last_name || "Placeholder last name";
+    timezone = timezone || "PDT"; // default to GMT-7
+
+    // 4️⃣ Refresh Calendly access token
+    await refreshCalendlyAccessToken();
+
+    // 5️⃣ Parse start_time into ISO string with seconds and timezone
+    const startTimeISO = new Date(`${start_time}:00`).toISOString(); // add seconds
+
+    // 6️⃣ Prepare payload for Calendly API
+    const payload = {
+      event_type: "https://api.calendly.com/event_types/02cc0b90-407e-4009-82e8-0bc33598718d",
+      start_time: startTimeISO,
+      invitee: { email, first_name, last_name, timezone }
+    };
+
+    console.log("➡️ Sending booking payload:", payload);
+
+    // 7️⃣ Send booking request to Calendly
     const response = await fetch("https://api.calendly.com/scheduling/event_invitees", {
       method: "POST",
       headers: {
@@ -141,14 +164,36 @@ app.post("/vapi/book-slot", async (req, res) => {
     });
 
     const data = await response.json();
-    console.log("✅ Calendly Booking Response:", JSON.stringify(data, null, 2));
 
-    res.json(data);
+    // 8️⃣ Check result and respond
+    if (response.ok && data?.resource?.uri) {
+      console.log("✅ Booking successful:", data.resource.uri);
+
+      return res.status(200).json({
+        book_status: "success",
+        meeting_uri: data.resource.uri,
+        event: data.resource,
+        message: "Meeting successfully booked."
+      });
+    } else {
+      console.error("❌ Calendly returned an error:", data);
+      return res.status(response.status).json({
+        book_status: "failed",
+        message: data.message || "Calendly booking failed",
+        error: data
+      });
+    }
+
   } catch (err) {
     console.error("❌ Booking Error:", err);
-    res.status(500).json({ error: "Failed to book meeting" });
+    return res.status(500).json({
+      book_status: "failed",
+      message: "Internal server error while booking",
+      error: err.message
+    });
   }
 });
+
 
 // ---------- Calendly OAuth Flow ----------
 app.get("/oauth/calendly/start", (req, res) => {
