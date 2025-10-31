@@ -130,7 +130,7 @@ app.post("/vapi/book-slot", async (req, res) => {
 
   try {
     // 1️⃣ Extract input fields with defaults
-    let { start_time, email, first_name, last_name, timezone } = req.body;
+    let { start_time, email, first_name, last_name, timezone, customer_number } = req.body;
 
     // 2️⃣ Validate start_time format: expect 'YYYY-MM-DDTHH:mm'
     if (!start_time || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(start_time)) {
@@ -163,7 +163,7 @@ app.post("/vapi/book-slot", async (req, res) => {
       invitee: { email, first_name, last_name , timezone },
       location: {
         kind: "outbound_call",
-        location: "Phone Call"
+        location: customer_number
       }
     };
 
