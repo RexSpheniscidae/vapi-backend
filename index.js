@@ -31,7 +31,7 @@ async function updateRenderEnvVariable(name, value) {
   });
 
   if (!response.ok) {
-    console.error(`❌ Failed to update Render env var: ${response.status}`, await response.text());
+    console.error(`❌ Failed to update Render env var: ${response.status}, new_token: ${value}`, await response.text());
   } else {
     console.log(`✅ Updated ${name} in Render`);
   }
