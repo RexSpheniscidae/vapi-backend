@@ -26,9 +26,7 @@ async function updateRenderEnvVariable(name, value) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      envVars: [
-        { envVarValue: value }
-      ],
+      envVarValue: value
     }),
   });
 
