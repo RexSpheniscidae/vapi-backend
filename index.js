@@ -19,51 +19,74 @@ app.listen(PORT, () => {
 
 // ---------- REAL-TIME AVAILABILITY ----------
 app.get("/vapi/get-availability", async (req, res) => {
-  const eventType = "https://api.calendly.com/event_types/02cc0b90-407e-4009-82e8-0bc33598718d";
+  console.log("🔹 /vapi/get-availability CALLED");
 
-  const startTime = req.query.start || new Date().toISOString(); // Now
-  const endTime = req.query.end || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // +7 days
+  const eventType = "https://api.calendly.com/event_types/02cc0b90-407e-4009-82e8-0bc33598718d";
+  const startTime = new Date().toISOString();
+  const endTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  console.log("➡️ Requesting Calendly Availability:", { eventType, startTime, endTime });
 
   try {
     const response = await fetch(
       `https://api.calendly.com/event_type_available_times?event_type=${eventType}&start_time=${startTime}&end_time=${endTime}`,
-      { headers: { Authorization: `Bearer ${process.env.CALENDLY_TOKEN}` } }
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.CALENDLY_OAUTH_ACCESS_TOKEN}`,
+          "Content-Type": "application/json"
+        }
+      }
     );
 
     const data = await response.json();
+
+    console.log("✅ Calendly Availability Response:", JSON.stringify(data, null, 2));
+
     res.json(data.resource?.available_times || []);
   } catch (err) {
-    console.error("Availability error:", err);
+    console.error("❌ Availability Error:", err);
     res.status(500).json({ error: "Unable to fetch availability" });
   }
 });
 
 
+
 // ---------- BOOK A MEETING ----------
 app.post("/vapi/book-slot", async (req, res) => {
+  console.log("🔹 /vapi/book-slot CALLED");
+  console.log("📩 Request Body from Vapi:", req.body);
+
   const { start_time, email, first_name, last_name, timezone } = req.body;
+
+  const payload = {
+    event_type: `https://api.calendly.com/event_types/02cc0b90-407e-4009-82e8-0bc33598718d`,
+    start_time,
+    invitee: { email, first_name, last_name, timezone }
+  };
+
+  console.log("➡️ Sending Calendly Booking Payload:", JSON.stringify(payload, null, 2));
 
   try {
     const response = await fetch("https://api.calendly.com/scheduling/event_invitees", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.CALENDLY_TOKEN}`,
+        Authorization: `Bearer ${process.env.CALENDLY_OAUTH_ACCESS_TOKEN}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        event_type: `https://api.calendly.com/event_types/02cc0b90-407e-4009-82e8-0bc33598718d`,
-        start_time,
-        invitee: { email, first_name, last_name, timezone }
-      })
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json();
+
+    console.log("✅ Calendly Booking Response:", JSON.stringify(data, null, 2));
+
     res.json(data);
   } catch (err) {
-    console.error("Booking error:", err);
-    res.status(500).json({ error: "Unable to book meeting" });
+    console.error("❌ Booking Error:", err);
+    res.status(500).json({ error: "Failed to book meeting" });
   }
 });
+
 // === Calendly OAuth: Start Flow ===
 app.get("/oauth/calendly/start", (req, res) => {
   const params = new URLSearchParams({
